@@ -7,12 +7,7 @@ platform:
 - x64
 - ARM
 install:
-- IF EXIST C:\MinGW\bin (
-- '  set PATH=%PATH%;C:\MinGW\bin'
-- )
+- IF EXIST C:\MinGW\bin SET PATH=%PATH%;C:\MinGW\bin
+
 build_script:
-- IF EXIST C:\MinGW\bin (
-- '  mingw32-make'
-- ) ELSE (
-- NMAKE /F Makefile.nm
-- )
+- IF EXIST C:\MinGW\bin ( mingw32-make ) ELSE ( NMAKE /F Makefile.nm )
