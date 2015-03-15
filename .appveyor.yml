@@ -1,0 +1,5 @@
+os: MinGW
+install:
+  - set PATH=%PATH%;C:\MinGW\bin
+build_script:
+  - mingw32-make
