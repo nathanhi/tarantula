@@ -3,13 +3,17 @@
 #include <fcntl.h> // O_RDONLY
 #include <stdlib.h> // atoi
 #include <string.h> // memcpy
+#include <sys/stat.h> // fstat()
+
+#if (defined(_MSC_VER))
+#include <windows.h>
+#endif
 
 #if (defined(__unix__) || defined(__HAIKU__))
 #define POSIX
 #endif
 
 #ifdef POSIX
-#include <sys/stat.h> // fstat()
 #include <sys/mman.h> // mmap()
 #endif
 
@@ -46,7 +50,6 @@ tar getHeader(const char *tarfile) {
 	struct tar_raw header;
 	struct tar header_norm;
 
-#ifdef POSIX
 	char *f;
 	struct stat s;
 	int fd = open(tarfile, O_RDONLY);
@@ -54,8 +57,13 @@ tar getHeader(const char *tarfile) {
 
 	if ((fd >= 0) && (fstat(fd, &s) == 0)) {
 		/* If open and fstat worked */
+#ifdef POSIX
 		f = (char *) mmap (0, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-
+#elif (defined(_MSC_VER))
+		HANDLE fdhandle = CreateFile(tarfile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY, 0, s.st_size, 0);
+		f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
+#endif
 		/* Map fields from header to respective variables in struct */
 		memcpy(header.filename, f+FILENAME_OFFSET, sizeof(header.filename));
 		memcpy(header.filemode, f+FILEMODE_OFFSET, sizeof(header.filemode));
@@ -77,10 +85,9 @@ tar getHeader(const char *tarfile) {
 		/* Convert from raw to normalized header struct */
 		header_norm = __rawToNorm(&header);
 
-		char data[header_norm.filesize];
-		memcpy(data, f+HEADERLEN, sizeof(data));
+		char *data = malloc(header_norm.filesize);
+		memcpy(data, f+HEADERLEN, header_norm.filesize);
 		printf("data: %s\n", data);
 	}
-#endif
 	return header_norm;
 }
