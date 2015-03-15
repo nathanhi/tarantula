@@ -1,0 +1,22 @@
+LIB_NAME = libtarantula.lib
+DLL_NAME = libtarantula.dll
+SAMPLE_NAME = sample.exe
+
+LIBSRC_DIR = src
+SAMPLESRC_DIR = sample
+
+LIBSRC_FILES = $(LIBSRC_DIR)\tarantula.c
+SAMPLESRC_FILES = $(SAMPLESRC_DIR)\sample.c
+
+libtarantula : $(LIBSRC_FILES)
+  cl /Fo$(LIBSRC_DIR)\ /D_USRDLL /D_WINDLL $(LIBSRC_FILES) /link /DLL /OUT:$(LIBSRC_DIR)\$(DLL_NAME)
+  lib /OUT:$(LIBSRC_DIR)\$(LIB_NAME) $(LIBSRC_DIR)\tarantula.obj
+
+sample : $(SAMPLESRC_FILES)
+  cl /Fo$(LIBSRC_DIR)\ $(SAMPLESRC_FILES) /link $(LIBSRC_DIR)\$(LIB_NAME) /OUT:$(LIBSRC_DIR)\$(SAMPLE_NAME)
+
+clean:
+  del /S /F /Q $(LIBSRC_DIR)\libtarantula.* $(LIBSRC_DIR)\sample.* $(LIBSRC_DIR)\tarantula.obj
+
+all: libtarantula
+sample: libtarantula
