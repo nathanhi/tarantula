@@ -1,5 +1,18 @@
-os: MinGW
+version: 1.0.{build}
+os:
+- MinGW
+- Visual Studio 2015 Preview
+platform:
+- x86
+- x64
+- ARM
 install:
-  - set PATH=%PATH%;C:\MinGW\bin
+- IF EXIST C:\MinGW\bin (
+- '  set PATH=%PATH%;C:\MinGW\bin'
+- )
 build_script:
-  - mingw32-make
+- IF EXIST C:\MinGW\bin (
+- '  mingw32-make'
+- ) ELSE (
+- NMAKE /F Makefile.nm
+- )
