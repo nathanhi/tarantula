@@ -1,6 +1,3 @@
-CC=clang-3.7
-CFLAGS=
-
 all: libtarantula
 sample: libtarantula
 
