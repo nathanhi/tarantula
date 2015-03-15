@@ -28,7 +28,7 @@ tar __rawToNorm(struct tar_raw *header) {
 	strncpy(norm_header.owner_groupname, header->owner_groupname, 32);
 	strncpy(norm_header.filename_prefix, header->filename_prefix, 155);
 	
-	/* Convert these valuese to int */
+	/* Convert these values to int */
 	norm_header.filemode = atoi(header->filemode);
 	norm_header.owner_UID = atoi(header->owner_UID);
 	norm_header.owner_GID = atoi(header->owner_GID);
@@ -42,7 +42,7 @@ tar __rawToNorm(struct tar_raw *header) {
 	return norm_header;
 }
 
-tar getHeader(int offset, const char *tarfile) {
+tar getHeader(const char *tarfile) {
 	struct tar_raw header;
 	struct tar header_norm;
 
@@ -50,7 +50,7 @@ tar getHeader(int offset, const char *tarfile) {
 	char *f;
 	struct stat s;
 	int fd = open(tarfile, O_RDONLY);
-	int curr_offset = 0;
+	//int curr_offset = 0;
 
 	if ((fd >= 0) && (fstat(fd, &s) == 0)) {
 		/* If open and fstat worked */
