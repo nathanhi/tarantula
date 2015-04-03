@@ -62,75 +62,78 @@ tar_headers listArchiveContent(const char *tarfile) {
     if ((fd >= 0) && (fstat(fd, &s) == 0)) {
         /* If open and fstat worked */
 #ifdef POSIX
-        f = (char *) mmap (0, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        f = (char *) mmap(0, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (f != MAP_FAILED) {
 #elif (defined(_MSC_VER))
         HANDLE fdhandle = CreateFile(tarfile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY, 0, s.st_size, 0);
         f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
+        if (f != NULL) {
 #endif
 
-        int curpos = 0;
-        tar *tarHeaders = NULL;
-        int aritems = 0;
-        int arsize = 0;
+            int curpos = 0;
+            tar *tarHeaders = NULL;
+            int aritems = 0;
+            int arsize = 0;
 
-        while (s.st_size-curpos > 1024) {
-            //printf("%li-%i (%li) > 1024\n", s.st_size, curpos, s.st_size-curpos);
-            /* Iterate over archive */
+            while (s.st_size-curpos > 1024) {
+                //printf("%li-%i (%li) > 1024\n", s.st_size, curpos, s.st_size-curpos);
+                /* Iterate over archive */
 
-            /* Map fields from header to respective variables in struct */
-            memcpy(header.filename, f+curpos+FILENAME_OFFSET, sizeof(header.filename));
-            memcpy(header.filemode, f+curpos+FILEMODE_OFFSET, sizeof(header.filemode));
-            memcpy(header.owner_UID, f+curpos+UID_OFFSET, sizeof(header.owner_UID));
-            memcpy(header.owner_GID, f+curpos+GID_OFFSET, sizeof(header.owner_GID));
-            memcpy(header.filesize, f+curpos+FILESIZE_OFFSET, sizeof(header.filesize));
-            memcpy(header.modification_time, f+curpos+MTIME_OFFSET, sizeof(header.modification_time));
-            memcpy(header.checksum, f+curpos+CHECKSUM_OFFSET, sizeof(header.checksum));
-            memcpy(header.typeflag, f+curpos+TYPEFLAG_OFFSET, sizeof(header.typeflag));
-            memcpy(header.linktarget, f+curpos+LINKTARGET_OFFSET, sizeof(header.linktarget));
-            memcpy(header.ustarindicator, f+curpos+USTARINDICATOR_OFFSET, sizeof(header.ustarindicator));
-            memcpy(header.ustarversion, f+curpos+USTARVERSION_OFFSET, sizeof(header.ustarversion));
-            memcpy(header.owner_username, f+curpos+USERNAME_OFFSET, sizeof(header.owner_username));
-            memcpy(header.owner_groupname, f+curpos+GROUPNAME_OFFSET, sizeof(header.owner_groupname));
-            memcpy(header.device_majornumber, f+curpos+DEVMAJORNUM_OFFSET, sizeof(header.device_majornumber));
-            memcpy(header.device_minornumber, f+curpos+DEVMINORNUM_OFFSET, sizeof(header.device_minornumber));
-            memcpy(header.filename_prefix, f+curpos+FILENAMEPREFIX_OFFSET, sizeof(header.filename_prefix));
+                /* Map fields from header to respective variables in struct */
+                memcpy(header.filename, f+curpos+FILENAME_OFFSET, sizeof(header.filename));
+                memcpy(header.filemode, f+curpos+FILEMODE_OFFSET, sizeof(header.filemode));
+                memcpy(header.owner_UID, f+curpos+UID_OFFSET, sizeof(header.owner_UID));
+                memcpy(header.owner_GID, f+curpos+GID_OFFSET, sizeof(header.owner_GID));
+                memcpy(header.filesize, f+curpos+FILESIZE_OFFSET, sizeof(header.filesize));
+                memcpy(header.modification_time, f+curpos+MTIME_OFFSET, sizeof(header.modification_time));
+                memcpy(header.checksum, f+curpos+CHECKSUM_OFFSET, sizeof(header.checksum));
+                memcpy(header.typeflag, f+curpos+TYPEFLAG_OFFSET, sizeof(header.typeflag));
+                memcpy(header.linktarget, f+curpos+LINKTARGET_OFFSET, sizeof(header.linktarget));
+                memcpy(header.ustarindicator, f+curpos+USTARINDICATOR_OFFSET, sizeof(header.ustarindicator));
+                memcpy(header.ustarversion, f+curpos+USTARVERSION_OFFSET, sizeof(header.ustarversion));
+                memcpy(header.owner_username, f+curpos+USERNAME_OFFSET, sizeof(header.owner_username));
+                memcpy(header.owner_groupname, f+curpos+GROUPNAME_OFFSET, sizeof(header.owner_groupname));
+                memcpy(header.device_majornumber, f+curpos+DEVMAJORNUM_OFFSET, sizeof(header.device_majornumber));
+                memcpy(header.device_minornumber, f+curpos+DEVMINORNUM_OFFSET, sizeof(header.device_minornumber));
+                memcpy(header.filename_prefix, f+curpos+FILENAMEPREFIX_OFFSET, sizeof(header.filename_prefix));
 
-            /* Convert from raw to normalized header struct */
-            header_norm = __rawToNorm(&header);
+                /* Convert from raw to normalized header struct */
+                header_norm = __rawToNorm(&header);
 
-            /* // Read data from current file
-             * char *data = malloc(header_norm.filesize);
-             * memcpy(data, f+curpos+HEADERLEN, header_norm.filesize);
-             * printf("data: '%s'\n", data);
-             */
+                /* // Read data from current file
+                 * char *data = malloc(header_norm.filesize);
+                 * memcpy(data, f+curpos+HEADERLEN, header_norm.filesize);
+                 * printf("data: '%s'\n", data);
+                 */
 
-            /* // Debug output
-             * printf("curpos: %i\n", curpos);
-             * printf("HEADERLEN: %i\n", HEADERLEN);
-             * printf("header_norm.filesize: %lli\n", header_norm.filesize);
-             * printf("END == %lli\n\n", curpos+HEADERLEN+header_norm.filesize);
-             */
+                /* // Debug output
+                 * printf("curpos: %i\n", curpos);
+                 * printf("HEADERLEN: %i\n", HEADERLEN);
+                 * printf("header_norm.filesize: %lli\n", header_norm.filesize);
+                 * printf("END == %lli\n\n", curpos+HEADERLEN+header_norm.filesize);
+                 */
 
-            /* Add header size + file size to current position.
-             * Blocksize is 512, so we also have to round up
-             * to the next block (for the next file / or end).
-             */
-            curpos = curpos+HEADERLEN+header_norm.filesize;
-            curpos = ((curpos/512)+1)*512;
+                /* Add header size + file size to current position.
+                 * Blocksize is 512, so we also have to round up
+                 * to the next block (for the next file / or end).
+                 */
+                curpos = curpos+HEADERLEN+header_norm.filesize;
+                curpos = ((curpos/512)+1)*512;
 
-            // Here be dragons
-            // Add struct (tar header_norm) to dynamic array
-            arsize += sizeof(tar);
-            void *_artmp = realloc(tarHeaders, arsize);
-            tarHeaders = (tar*)_artmp;
-            tarHeaders[aritems] = header_norm;
-            aritems++;
+                // Here be dragons
+                // Add struct (tar header_norm) to dynamic array
+                arsize += sizeof(tar);
+                void *_artmp = realloc(tarHeaders, arsize);
+                tarHeaders = (tar*)_artmp;
+                tarHeaders[aritems] = header_norm;
+                aritems++;
+            }
+
+            /* Add array to struct including number of items */
+            headers.headers = tarHeaders;
+            headers.files = aritems;
         }
-
-        /* Add array to struct including number of items */
-        headers.headers = tarHeaders;
-        headers.files = aritems;
     }
     return headers;
 }
