@@ -46,14 +46,13 @@ tar __rawToNorm(struct tar_raw *header) {
 	return norm_header;
 }
 
-tar getHeader(const char *tarfile) {
+tar listArchiveContent(const char *tarfile) {
 	struct tar_raw header;
 	struct tar header_norm;
 
 	char *f;
 	struct stat s;
 	int fd = open(tarfile, O_RDONLY);
-	//int curr_offset = 0;
 
 	if ((fd >= 0) && (fstat(fd, &s) == 0)) {
 		/* If open and fstat worked */
@@ -64,30 +63,40 @@ tar getHeader(const char *tarfile) {
 		HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY, 0, s.st_size, 0);
 		f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
 #endif
-		/* Map fields from header to respective variables in struct */
-		memcpy(header.filename, f+FILENAME_OFFSET, sizeof(header.filename));
-		memcpy(header.filemode, f+FILEMODE_OFFSET, sizeof(header.filemode));
-		memcpy(header.owner_UID, f+UID_OFFSET, sizeof(header.owner_UID));
-		memcpy(header.owner_GID, f+GID_OFFSET, sizeof(header.owner_GID));
-		memcpy(header.filesize, f+FILESIZE_OFFSET, sizeof(header.filesize));
-		memcpy(header.modification_time, f+MTIME_OFFSET, sizeof(header.modification_time));
-		memcpy(header.checksum, f+CHECKSUM_OFFSET, sizeof(header.checksum));
-		memcpy(header.typeflag, f+TYPEFLAG_OFFSET, sizeof(header.typeflag));
-		memcpy(header.linktarget, f+LINKTARGET_OFFSET, sizeof(header.linktarget));
-		memcpy(header.ustarindicator, f+USTARINDICATOR_OFFSET, sizeof(header.ustarindicator));
-		memcpy(header.ustarversion, f+USTARVERSION_OFFSET, sizeof(header.ustarversion));
-		memcpy(header.owner_username, f+USERNAME_OFFSET, sizeof(header.owner_username));
-		memcpy(header.owner_groupname, f+GROUPNAME_OFFSET, sizeof(header.owner_groupname));
-		memcpy(header.device_majornumber, f+DEVMAJORNUM_OFFSET, sizeof(header.device_majornumber));
-		memcpy(header.device_minornumber, f+DEVMINORNUM_OFFSET, sizeof(header.device_minornumber));
-		memcpy(header.filename_prefix, f+FILENAMEPREFIX_OFFSET, sizeof(header.filename_prefix));
 
-		/* Convert from raw to normalized header struct */
-		header_norm = __rawToNorm(&header);
+		int curpos = 0;
+		while (curpos <= s.st_size) {
+			/* Iterate over archive */
 
-		char *data = malloc(header_norm.filesize);
-		memcpy(data, f+HEADERLEN, header_norm.filesize);
-		printf("data: %s\n", data);
+			/* Map fields from header to respective variables in struct */
+			memcpy(header.filename, f+curpos+FILENAME_OFFSET, sizeof(header.filename));
+			memcpy(header.filemode, f+curpos+FILEMODE_OFFSET, sizeof(header.filemode));
+			memcpy(header.owner_UID, f+curpos+UID_OFFSET, sizeof(header.owner_UID));
+			memcpy(header.owner_GID, f+curpos+GID_OFFSET, sizeof(header.owner_GID));
+			memcpy(header.filesize, f+curpos+FILESIZE_OFFSET, sizeof(header.filesize));
+			memcpy(header.modification_time, f+curpos+MTIME_OFFSET, sizeof(header.modification_time));
+			memcpy(header.checksum, f+curpos+CHECKSUM_OFFSET, sizeof(header.checksum));
+			memcpy(header.typeflag, f+curpos+TYPEFLAG_OFFSET, sizeof(header.typeflag));
+			memcpy(header.linktarget, f+curpos+LINKTARGET_OFFSET, sizeof(header.linktarget));
+			memcpy(header.ustarindicator, f+curpos+USTARINDICATOR_OFFSET, sizeof(header.ustarindicator));
+			memcpy(header.ustarversion, f+curpos+USTARVERSION_OFFSET, sizeof(header.ustarversion));
+			memcpy(header.owner_username, f+curpos+USERNAME_OFFSET, sizeof(header.owner_username));
+			memcpy(header.owner_groupname, f+curpos+GROUPNAME_OFFSET, sizeof(header.owner_groupname));
+			memcpy(header.device_majornumber, f+curpos+DEVMAJORNUM_OFFSET, sizeof(header.device_majornumber));
+			memcpy(header.device_minornumber, f+curpos+DEVMINORNUM_OFFSET, sizeof(header.device_minornumber));
+			memcpy(header.filename_prefix, f+curpos+FILENAMEPREFIX_OFFSET, sizeof(header.filename_prefix));
+
+			/* Convert from raw to normalized header struct */
+			header_norm = __rawToNorm(&header);
+
+			char *data = malloc(header_norm.filesize);
+			memcpy(data, f+curpos+HEADERLEN, header_norm.filesize);
+			printf("data: %s\n", data);
+			curpos = curpos+HEADERLEN+header_norm.filesize;
+			curpos = ((curpos/512)+1)*512;
+			printf("curpos: %i\n", curpos);
+			printf("remaining blocks: %jd\n", (intmax_t)s.st_size-curpos);
+		}
 	}
 	return header_norm;
 }

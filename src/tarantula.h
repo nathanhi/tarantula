@@ -88,6 +88,6 @@ struct tar_raw {
 	char filename_prefix[155];
 };
 
-tar getHeader(const char *tarfile);
+tar listArchiveContent(const char *tarfile);
 
 #endif /* TARANTULA_H */

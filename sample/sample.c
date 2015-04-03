@@ -3,7 +3,7 @@
 
 int main() {
 	struct tar foo;
-	foo = getHeader("../sample/sample.tar");
+	foo = listArchiveContent("../sample/sample.tar");
 	printf("filename: '%s'\n", foo.filename);
 	printf("filemode: '%i'\n", foo.filemode);
 	printf("owner_UID: '%i'\n", foo.owner_UID);
