@@ -11,8 +11,13 @@ int main() {
         printf("filemode: '%i'\n", foo.headers[i].filemode);
         printf("owner_UID: '%i'\n", foo.headers[i].owner_UID);
         printf("owner_GID: '%i'\n", foo.headers[i].owner_GID);
+#if (defined(_MSC_VER) || defined(__MINGW32__))
+        printf("filesize: '%I64u'\n", foo.headers[i].filesize);
+        printf("modification_time: '%I64u'\n", foo.headers[i].modification_time);
+#else
         printf("filesize: '%lli'\n", foo.headers[i].filesize);
         printf("modification_time: '%lli'\n", foo.headers[i].modification_time);
+#endif
         printf("checksum: '%s'\n", foo.headers[i].checksum);
         printf("typeflag: '%i'\n", foo.headers[i].typeflag);
         printf("linktarget: '%s'\n", foo.headers[i].linktarget);

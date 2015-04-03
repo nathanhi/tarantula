@@ -6,7 +6,8 @@
 #include <sys/stat.h> // fstat()
 #include <stdint.h> //intmax_t
 
-#if (defined(_MSC_VER))
+#if (defined(_MSC_VER) || defined(__MINGW32__))
+#define WINBUILD
 #include <windows.h>
 #endif
 
@@ -54,6 +55,8 @@ tar_headers listArchiveContent(const char *tarfile) {
     struct tar_raw header;
     struct tar header_norm;
     struct tar_headers headers;
+    headers.headers = NULL;
+    headers.files = 0;
 
     char *f;
     struct stat s;
@@ -64,7 +67,7 @@ tar_headers listArchiveContent(const char *tarfile) {
 #ifdef POSIX
         f = (char *) mmap(0, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
         if (f != MAP_FAILED) {
-#elif (defined(_MSC_VER))
+#elif (defined(WINBUILD))
         HANDLE fdhandle = CreateFile(tarfile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY, 0, s.st_size, 0);
         f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);

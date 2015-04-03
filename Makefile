@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-	RM = del /sfq
+	RM = del /s /f /q
 	LIBEND = .dll
 	BINEND = .exe
 else
