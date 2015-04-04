@@ -1,10 +1,21 @@
 #include "../src/tarantula.h"
 #include <stdio.h>
 
+int get_next_header(int *curpos) {
+    (*curpos)++;
+    return 1;
+}
+
 int main() {
+    int curpos = 0;
+    while (get_next_header(&curpos)) {
+        printf("%i", curpos);
+        if (curpos > 10)
+            break;
+    }
     struct tar_headers foo;
     int i = 0;
-    foo = listArchiveContent("../sample/sample.tar");
+    foo = list_archive_content("../sample/sample.tar");
     
     while (i < foo.files) {
         printf("filename: '%s'\n", foo.headers[i].filename);
@@ -30,5 +41,6 @@ int main() {
         printf("filename_prefix: '%s'\n\n\n", foo.headers[i].filename_prefix);
         i++;
     }
+    get_file_from_archive("../sample/sample.tar", "TESTFILE");
     return 0;
 }

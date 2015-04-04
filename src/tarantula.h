@@ -51,6 +51,7 @@
  */
 
 typedef struct tar {
+    int offset;
     char filename[100];
     int filemode;
     int owner_UID;
@@ -93,6 +94,7 @@ typedef struct tar_headers {
     int files;
 } tar_headers;
 
-tar_headers listArchiveContent(const char *tarfile);
+tar_headers list_archive_content(const char *tarfile);
+void get_file_from_archive(const char *tarfile, const char *filename);
 
 #endif /* TARANTULA_H */
