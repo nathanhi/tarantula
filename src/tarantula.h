@@ -70,7 +70,7 @@ typedef struct tar {
     char filename_prefix[155];
 } tar;
 
-struct tar_raw {
+typedef struct tar_raw {
     char filename[100];
     char filemode[8];
     char owner_UID[8];
@@ -87,14 +87,21 @@ struct tar_raw {
     char device_majornumber[8];
     char device_minornumber[8];
     char filename_prefix[155];
-};
+} tar_raw;
 
 typedef struct tar_headers {
     tar *headers;
     int files;
 } tar_headers;
 
-tar_headers list_archive_content(const char *tarfile);
+typedef struct tar_fle {
+    const char *filename;
+    tar curheader;
+    int curpos;
+} tar_fle;
+
 void get_file_from_archive(const char *tarfile, const char *filename);
+int get_next_header(tar_fle *tar_file);
+tar_fle tar_open(const char *tarfile);
 
 #endif /* TARANTULA_H */
