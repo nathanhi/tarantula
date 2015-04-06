@@ -1,6 +1,8 @@
 #ifndef TARANTULA_H
 #define TARANTULA_H
 
+#include <sys/stat.h> // fstat()
+
 #define FILENAME_OFFSET 0
 #define FILEMODE_OFFSET 100
 #define UID_OFFSET 108
@@ -96,12 +98,14 @@ typedef struct tar_headers {
 
 typedef struct tar_fle {
     const char *filename;
+    int fd;
+    struct stat s;
     tar curheader;
     int curpos;
 } tar_fle;
 
 void get_file_from_archive(const char *tarfile, const char *filename);
 int get_next_header(tar_fle *tar_file);
-tar_fle tar_open(const char *tarfile);
+int tar_open(const char *tarfile, tar_fle *tar_file);
 
 #endif /* TARANTULA_H */

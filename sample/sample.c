@@ -2,10 +2,14 @@
 #include <stdio.h>
 
 int main() {
-    tar_fle tar_file = tar_open("../sample/sample.tar");
+    tar_fle tar_file;
+    if (tar_open("../sample/sample.tar", &tar_file)) {
+        printf("Failed to open archive file. Exiting.\n");
+        return 1;
+    }
 
     while (get_next_header(&tar_file)) {
-        printf("filename: %s\n", tar_file.curheader.filename);
+        printf("filename: '%s'\n", tar_file.curheader.filename);
         printf("filemode: '%i'\n", tar_file.curheader.filemode);
         printf("owner_UID: '%i'\n", tar_file.curheader.owner_UID);
         printf("owner_GID: '%i'\n", tar_file.curheader.owner_GID);
@@ -25,8 +29,8 @@ int main() {
         printf("owner_groupname: '%s'\n", tar_file.curheader.owner_groupname);
         printf("device_majornumber: '%i'\n", tar_file.curheader.device_majornumber);
         printf("device_minornumber: '%i'\n", tar_file.curheader.device_minornumber);
-        printf("filename_prefix: '%s'\n\n\n", tar_file.curheader.filename_prefix);
+        printf("filename_prefix: '%s'\n", tar_file.curheader.filename_prefix);
+        printf("--------------------------------\n");
     }
-
     return 0;
 }

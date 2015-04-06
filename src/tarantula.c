@@ -3,8 +3,8 @@
 #include <fcntl.h> // O_RDONLY
 #include <stdlib.h> // atoi
 #include <string.h> // memcpy
-#include <sys/stat.h> // fstat()
-#include <stdint.h> //intmax_t
+#include <stdint.h> // intmax_t
+#include <unistd.h> // close(), getpagesize()
 
 #if (defined(_MSC_VER) || defined(__MINGW32__))
 #define WINBUILD
@@ -16,36 +16,33 @@
 #include <sys/mman.h> // mmap()
 #endif
 
-tar __raw_to_norm(tar_raw *header) {
+void __raw_to_norm(tar_raw *header, tar *norm_header) {
     /* Converts a RAW tar header (all char,
      * no ints) to a normalized header (chars+ints)
      */
-    tar norm_header;
 
     /* Keep these values as chars */
-    strncpy(norm_header.filename, header->filename, 100);
-    strncpy(norm_header.checksum, header->checksum, 8);
-    strncpy(norm_header.linktarget, header->linktarget, 100);
-    strncpy(norm_header.ustarindicator, header->ustarindicator, 6);
-    strncpy(norm_header.owner_username, header->owner_username, 32);
-    strncpy(norm_header.owner_groupname, header->owner_groupname, 32);
-    strncpy(norm_header.filename_prefix, header->filename_prefix, 155);
+    strncpy(norm_header->filename, header->filename, 100);
+    strncpy(norm_header->checksum, header->checksum, 8);
+    strncpy(norm_header->linktarget, header->linktarget, 100);
+    strncpy(norm_header->ustarindicator, header->ustarindicator, 6);
+    strncpy(norm_header->owner_username, header->owner_username, 32);
+    strncpy(norm_header->owner_groupname, header->owner_groupname, 32);
+    strncpy(norm_header->filename_prefix, header->filename_prefix, 155);
     
     /* Convert these values to int */
-    norm_header.filemode = atoi(header->filemode);
-    norm_header.owner_UID = atoi(header->owner_UID);
-    norm_header.owner_GID = atoi(header->owner_GID);
-    norm_header.filesize = atoi(header->filesize);
-    norm_header.typeflag = atoi(header->typeflag);
-    norm_header.ustarversion = atoi(header->ustarversion);
-    norm_header.device_majornumber = atoi(header->device_majornumber);
-    norm_header.device_minornumber = atoi(header->device_minornumber);
+    norm_header->filemode = atoi(header->filemode);
+    norm_header->owner_UID = atoi(header->owner_UID);
+    norm_header->owner_GID = atoi(header->owner_GID);
+    norm_header->filesize = atoi(header->filesize);
+    norm_header->typeflag = atoi(header->typeflag);
+    norm_header->ustarversion = atoi(header->ustarversion);
+    norm_header->device_majornumber = atoi(header->device_majornumber);
+    norm_header->device_minornumber = atoi(header->device_minornumber);
     
     /* Convert these values to long long int */
-    norm_header.filesize = strtoll(header->filesize, NULL, 8);
-    norm_header.modification_time = strtoll(header->modification_time, NULL, 8);
-
-    return norm_header;
+    norm_header->filesize = strtoll(header->filesize, NULL, 8);
+    norm_header->modification_time = strtoll(header->modification_time, NULL, 8);
 }
 
 void get_file_from_archive(const char *tarfile, const char *filename) {
@@ -61,89 +58,134 @@ void get_file_from_archive(const char *tarfile, const char *filename) {
     }*/
 }
 
+char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
+    /* Maps only a specific part of the file
+     * to memory: current offset. f can only be
+     * accessed with the correct file-based offset
+     */
+    char *f;
+
+#ifdef POSIX
+    // Use native mmap() on POSIX-systems
+    int pgsize = sysconf(_SC_PAGESIZE);
+    *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
+
+    f = (char *) mmap(0, pgsize, PROT_READ, MAP_PRIVATE,
+                      tar_file->fd, *new_offset);
+
+    if (f == MAP_FAILED) {
+#ifdef DEBUG
+        fprintf(stderr, "tarantula: mmap() failed: %s\n", f);
+#endif
+        return NULL;
+#ifdef DEBUG
+    } else {
+        printf("tarantula: mmap (offset: '%i') SUCCESS\n", *new_offset);
+#endif
+    }
+
+#elif (defined(WINBUILD))
+    // Use MapViewOfFile on Windows-systems
+    // TODO: Adapt this to the used pagesize boundary model above
+    HANDLE fdhandle = CreateFile(tar_file->filename,
+                                 GENERIC_READ,
+                                 FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 NULL, OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY,
+                                          0, s.st_size, 0);
+    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
+    if (f == NULL) {
+        // TODO: Correct error handling
+        return NULL;
+    }
+#endif
+    return f;
+}
+
+void unmap_file(char *f, tar_fle *tar_file) {
+    /* unmap the file from memory */
+#ifdef POSIX
+    if (munmap(f, sysconf(_SC_PAGESIZE)) != 0) {
+#ifdef DEBUG
+        fprintf(stderr, "tarantula: munmap failed!\n");
+    } else {
+        printf("tarantula: munmap SUCCESS\n");
+#endif
+    }
+#elif (defined(WINBUILD))
+    DO STUFF HERE! TODO!
+#endif
+}
+
 int get_next_header(tar_fle *tar_file) {
     /* Used to iterate over all headers in archive
      * Header can then be used to retrieve a specific file.
      */
-    tar_raw raw_header;
-    char *f;
-    struct stat s;
-    int fd = open(tar_file->filename, O_RDONLY);
-
-    if ((fd >= 0) && (fstat(fd, &s) == 0)) {
-        /* If open and fstat worked */
-
-#ifdef POSIX
-        // Use native mmap() on POSIX-systems
-        // TODO: We possibly want to pass curpos to mmap()
-        f = (char *) mmap(0, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (f == MAP_FAILED) {
-            // TODO: Correct error handling
-            printf("mmap() failed!");
-            return 0;
-        }
-
-#elif (defined(WINBUILD))
-        // Use MapViewOfFile on Windows-systems
-        // TODO: We possibly want to pass curpos to MapViewOfFile()
-        HANDLE fdhandle = CreateFile(tar_file->filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY, 0, s.st_size, 0);
-        f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
-        if (f == NULL) {
-            // TODO: Correct error handling
-            return 0;
-        }
-#endif
-
-        if (s.st_size-tar_file->curpos <= 1024) {
-            // Break loop on file end (1K of free blocks)
-            return 0;
-        }
-
-        /* Map fields from header to respective variables in struct */
-        memcpy(raw_header.filename, f+tar_file->curpos+FILENAME_OFFSET, sizeof(raw_header.filename));
-        memcpy(raw_header.filemode, f+tar_file->curpos+FILEMODE_OFFSET, sizeof(raw_header.filemode));
-        memcpy(raw_header.owner_UID, f+tar_file->curpos+UID_OFFSET, sizeof(raw_header.owner_UID));
-        memcpy(raw_header.owner_GID, f+tar_file->curpos+GID_OFFSET, sizeof(raw_header.owner_GID));
-        memcpy(raw_header.filesize, f+tar_file->curpos+FILESIZE_OFFSET, sizeof(raw_header.filesize));
-        memcpy(raw_header.modification_time, f+tar_file->curpos+MTIME_OFFSET, sizeof(raw_header.modification_time));
-        memcpy(raw_header.checksum, f+tar_file->curpos+CHECKSUM_OFFSET, sizeof(raw_header.checksum));
-        memcpy(raw_header.typeflag, f+tar_file->curpos+TYPEFLAG_OFFSET, sizeof(raw_header.typeflag));
-        memcpy(raw_header.linktarget, f+tar_file->curpos+LINKTARGET_OFFSET, sizeof(raw_header.linktarget));
-        memcpy(raw_header.ustarindicator, f+tar_file->curpos+USTARINDICATOR_OFFSET, sizeof(raw_header.ustarindicator));
-        memcpy(raw_header.ustarversion, f+tar_file->curpos+USTARVERSION_OFFSET, sizeof(raw_header.ustarversion));
-        memcpy(raw_header.owner_username, f+tar_file->curpos+USERNAME_OFFSET, sizeof(raw_header.owner_username));
-        memcpy(raw_header.owner_groupname, f+tar_file->curpos+GROUPNAME_OFFSET, sizeof(raw_header.owner_groupname));
-        memcpy(raw_header.device_majornumber, f+tar_file->curpos+DEVMAJORNUM_OFFSET, sizeof(raw_header.device_majornumber));
-        memcpy(raw_header.device_minornumber, f+tar_file->curpos+DEVMINORNUM_OFFSET, sizeof(raw_header.device_minornumber));
-        memcpy(raw_header.filename_prefix, f+tar_file->curpos+FILENAMEPREFIX_OFFSET, sizeof(raw_header.filename_prefix));
-
-        /* Convert from raw to normalized header struct */
-        // TODO: This might fail?
-        tar_file->curheader = __raw_to_norm(&raw_header);
-
-        tar_file->curheader.offset = tar_file->curpos;  // Add current offset to header
-        tar_file->curpos = tar_file->curpos+HEADERLEN+tar_file->curheader.filesize;
-        tar_file->curpos = ((tar_file->curpos/512)+1)*512;
-
-    } else {
-        // Return 0 on error / stop while loop
-        // TODO: Correct error handling
-        printf("Failed to open file!\n");
+    tar_raw *raw_header;
+    int new_offset;
+    char *f = map_file_on_offset(tar_file, &new_offset);
+    
+    if (f == NULL) {
+        // Break loop if mmap failed
+        // Try to undo mmap
+        unmap_file(f,tar_file);
         return 0;
     }
 
+    if (tar_file->s.st_size-tar_file->curpos <= HEADERLEN) {
+        // Break loop on file end (less than 500 bytes)
+#ifdef DEBUG
+        printf("tarantula: File end reached: (%i/%li)\n",
+               tar_file->curpos, tar_file->s.st_size);
+#endif
+        unmap_file(f, tar_file);
+        return 0;
+    }
+
+    // Write raw data from file to tar_raw struct
+    raw_header = (tar_raw*)((f-new_offset)+tar_file->curpos);
+
+    /* Convert from raw to normalized header struct */
+    // TODO: This might fail?
+    __raw_to_norm(raw_header, &tar_file->curheader);
+
+    tar_file->curheader.offset = tar_file->curpos;  // Add current offset to header
+    tar_file->curpos = tar_file->curpos+HEADERLEN+tar_file->curheader.filesize;
+    tar_file->curpos = ((tar_file->curpos/512)+1)*512;
+
+    char empty_buf[HEADERLEN] = { 0 };
+    if (memcmp(raw_header, empty_buf, sizeof(tar_raw)) == 0) {
+        // Skip current header if it is empty
+        unmap_file(f, tar_file);
+#ifdef DEBUG
+        printf("tarantula: Skipping current header as it is empty\n");
+#endif
+        return get_next_header(tar_file);
+    }
+
     // Continue loop if no errors occured
+    unmap_file(f, tar_file);
     return 1;
 }
 
-tar_fle tar_open(const char *tarfile) {
-    // TODO: Also move open() to this function
+int tar_open(const char *tarfile, tar_fle *tar_file) {
     tar header;
     header.offset = 0;
-    tar_fle tar_file;
-    tar_file.filename = tarfile;
-    tar_file.curheader = header;
-    tar_file.curpos = 0;
-    return tar_file;
+    tar_file->filename = tarfile;
+    tar_file->curheader = header;
+    tar_file->curpos = 0;
+
+    tar_file->fd = open(tarfile, O_RDONLY);
+
+    if ((tar_file->fd < 0) || (fstat(tar_file->fd, &tar_file->s) != 0)) {
+#ifdef DEBUG
+        fprintf(stderr, "tarantula: Failed to open file '%s'\n", tarfile);
+#endif
+        return 1;
+    }
+#ifdef DEBUG
+    printf("tarantula: Opened file '%s'\n", tarfile);
+#endif
+    return 0;
 }
