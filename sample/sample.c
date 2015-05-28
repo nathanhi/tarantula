@@ -32,5 +32,7 @@ int main() {
         printf("filename_prefix: '%s'\n", tar_file.curheader.filename_prefix);
         printf("--------------------------------\n");
     }
+    
+    tar_close(&tar_file);
     return 0;
 }

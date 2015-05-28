@@ -152,7 +152,11 @@ int get_next_header(tar_fle *tar_file) {
 
     tar_file->curheader.offset = tar_file->curpos;  // Add current offset to header
     tar_file->curpos = tar_file->curpos+HEADERLEN+tar_file->curheader.filesize;
-    tar_file->curpos = ((tar_file->curpos/512)+1)*512;
+    if (tar_file->curpos % 512 != 0) {
+        // If the current position is not a multiple
+        // of 512, align it to the next..
+        tar_file->curpos = ((tar_file->curpos/512)+1)*512;
+    }
 
     char empty_buf[HEADERLEN] = { 0 };
     if (memcmp(raw_header, empty_buf, sizeof(tar_raw)) == 0) {
@@ -188,4 +192,8 @@ int tar_open(const char *tarfile, tar_fle *tar_file) {
     printf("tarantula: Opened file '%s'\n", tarfile);
 #endif
     return 0;
+}
+
+int tar_close(tar_fle *tar_file) {
+    return close(tar_file->fd);
 }

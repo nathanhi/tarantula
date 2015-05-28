@@ -107,5 +107,6 @@ typedef struct tar_fle {
 void get_file_from_archive(const char *tarfile, const char *filename);
 int get_next_header(tar_fle *tar_file);
 int tar_open(const char *tarfile, tar_fle *tar_file);
+int tar_close(tar_fle *tar_file);
 
 #endif /* TARANTULA_H */
