@@ -1,13 +1,36 @@
 #include "../src/tarantula.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-int main() {
+void example_get_all_headers() {
+    // Example for function get_all_headers(),
+    // which retrieves all headers at once from the archive
+    // and returns an array of items.
+
+    // Call get_all_headers()
+    tar_headers header_array = get_all_headers("../sample/sample.tar");
+
+    // Parse data from get_all_headers.
+    printf("Number of files in archive: %i\n", header_array.files);
+    for(int i = 0; i<header_array.files; i++) {
+        // Iterate over every item in the array and print filename
+        printf("%i. filename: \'%s\'\n", i+1, header_array.headers[i].filename);
+    }
+}
+
+void example_get_next_header() {
+    // Example for function get_next_header(),
+    // which can be used for iteration over all
+    // headers using a for loop.
+    
+    // Open tar file
     tar_fle tar_file;
     if (tar_open("../sample/sample.tar", &tar_file)) {
         printf("Failed to open archive file. Exiting.\n");
-        return 1;
+        exit(1);
     }
 
+    // Iterate over every header in the tar file
     while (get_next_header(&tar_file)) {
         printf("filename: '%s'\n", tar_file.curheader.filename);
         printf("filemode: '%i'\n", tar_file.curheader.filemode);
@@ -32,7 +55,18 @@ int main() {
         printf("filename_prefix: '%s'\n", tar_file.curheader.filename_prefix);
         printf("--------------------------------\n");
     }
-    
+
+    // Close tar file
     tar_close(&tar_file);
+}
+
+int main() {
+    printf("Example of get_all_headers():\n");
+    printf("=============================\n");
+    example_get_all_headers();
+    
+    printf("\n\nExample of get_next_header():\n");
+    printf("=============================\n");
+    example_get_next_header();
     return 0;
 }
