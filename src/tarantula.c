@@ -173,14 +173,16 @@ int get_next_header(tar_fle *tar_file) {
     return 1;
 }
 
-tar_headers get_all_headers(const char *tarfile) {
+int get_all_headers(const char *tarfile, tar_headers *headers) {
     // Iterates over every header and fills a
     // dynamic array with every encountered header.
     // Handles tar_open() and tar_close() automatically.
     
     // Open tar file
     tar_fle tar_file;
-    tar_open(tarfile, &tar_file);
+    if (tar_open(tarfile, &tar_file) != 0) {
+        return 1;
+    }
 
     // Variable declaration for dynamic array
     tar *tar_array = NULL;
@@ -201,10 +203,9 @@ tar_headers get_all_headers(const char *tarfile) {
     tar_close(&tar_file);
 
     // Build final data type tar_headers
-    tar_headers headers;
-    headers.headers = tar_array;
-    headers.files = aritems;
-    return headers;
+    headers->headers = tar_array;
+    headers->files = aritems;
+    return 0;
 }
 
 int tar_open(const char *tarfile, tar_fle *tar_file) {

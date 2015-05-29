@@ -8,7 +8,11 @@ void example_get_all_headers() {
     // and returns an array of items.
 
     // Call get_all_headers()
-    tar_headers header_array = get_all_headers("../sample/sample.tar");
+    tar_headers header_array;
+    if (get_all_headers("../sample/sample.tar", &header_array) != 0) {
+        printf("Failed to retrieve headers from tar file. Aborting.\n");
+        return;
+    }
 
     // Parse data from get_all_headers.
     printf("Number of files in archive: %i\n", header_array.files);
@@ -25,9 +29,9 @@ void example_get_next_header() {
     
     // Open tar file
     tar_fle tar_file;
-    if (tar_open("../sample/sample.tar", &tar_file)) {
-        printf("Failed to open archive file. Exiting.\n");
-        exit(1);
+    if (tar_open("../sample/sample.tar", &tar_file) != 0) {
+        printf("Failed to open archive file. Aborting.\n");
+        return;
     }
 
     // Iterate over every header in the tar file
