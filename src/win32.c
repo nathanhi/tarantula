@@ -5,8 +5,6 @@
 #include <io.h> //_get_osfhandle
 #include "platform.h"
 
-#include <stdio.h> // _fileno
-
 char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
     /* Maps only a specific part of the file
      * to memory: current offset. f can only be
@@ -26,22 +24,20 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
     *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
 
     // Convert file descriptor to HANDLE
-    // Doesn't work:
     HANDLE fdhandle = _get_osfhandle(tar_file->fd);
-    // Works: HANDLE fdhandle = CreateFile("../sample.tar", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (fdhandle == INVALID_HANDLE_VALUE)
         return NULL;
 
     // Create file mapping object for tar file
     HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY,
-                                          0, (DWORD)new_offset, 0);
+                                          0, (DWORD)*new_offset, 0);
     if (mmaphandle == INVALID_HANDLE_VALUE)
         return NULL;
 
     // Map view of file mapping to memory
-    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, (SIZE_T)new_offset);
+    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, (SIZE_T)*new_offset);
     if (f == NULL)
-        printf("%i", GetLastError());
+        return NULL;
 
     return f;
 }
