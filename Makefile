@@ -13,11 +13,11 @@ all: libtarantula
 sample: libtarantula
 
 libtarantula: src/tarantula.c
-	$(CC) -c src/tarantula.c -o src/tarantula.o $(CFLAGS) -O2 -Wall -Werror $(FPIC)
+	$(CC) -c src/posix.c src/tarantula.c -o src/tarantula.o $(CFLAGS) -O2 -Wall -Werror $(FPIC)
 	$(CC) -shared -o src/libtarantula$(LIBEND) src/tarantula.o
 
 debug: src/tarantula.c
-	$(CC) -c src/tarantula.c -o src/tarantula.o $(CFLAGS) -DDEBUG -ggdb -Q -Wall -Werror $(FPIC)
+	$(CC) -c src/posix.c src/tarantula.c -o src/tarantula.o $(CFLAGS) -DDEBUG -ggdb -Q -Wall -Werror $(FPIC)
 	$(CC) -shared -o src/libtarantula$(LIBEND) src/tarantula.o
 
 sample: sample/sample.c

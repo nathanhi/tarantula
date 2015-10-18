@@ -2,7 +2,7 @@
 #define VC_EXTRALEAN
 
 #include <windows.h>  // HANDLE, CreateFileMapping, MapViewOfFile, UnmapViewOfFile
-#include <io.h> //_get_osfhandle
+#include <io.h> //_get_osfhandle, _close
 #include "platform.h"
 
 char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
@@ -45,4 +45,8 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
 void unmap_file(char *f, tar_fle *tar_file) {
     /* unmap the file from memory */
 	UnmapViewOfFile(f);
+}
+
+int tar_close(tar_fle *tar_file) {
+    return _close(tar_file->fd);
 }

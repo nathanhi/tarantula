@@ -143,7 +143,3 @@ int tar_open(const char *tarfile, tar_fle *tar_file) {
 
     return 0;
 }
-
-int tar_close(tar_fle *tar_file) {
-    return close(tar_file->fd);
-}

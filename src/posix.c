@@ -27,3 +27,7 @@ void unmap_file(char *f, tar_fle *tar_file) {
     /* unmap the file from memory */
     munmap(f, sysconf(_SC_PAGESIZE));
 }
+
+int tar_close(tar_fle *tar_file) {
+    return close(tar_file->fd);
+}
