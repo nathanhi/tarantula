@@ -1,20 +1,8 @@
 #include "tarantula.h"
-#include <stdio.h> // TODO: Remove / printf
 #include <fcntl.h> // O_RDONLY
-#include <stdlib.h> // atoi
-#include <string.h> // memcpy
-#include <stdint.h> // intmax_t
-#include <unistd.h> // close(), getpagesize()
-
-#if (defined(_MSC_VER) || defined(__MINGW32__))
-#define WINBUILD
-#include <windows.h>
-#endif
-
-#if (defined(__unix__) || defined(__HAIKU__))
-#define POSIX
-#include <sys/mman.h> // mmap()
-#endif
+#include <stdlib.h> // atoi, strtoll
+#include <string.h> // strncpy
+#include "platform.h"
 
 void __raw_to_norm(tar_raw *header, tar *norm_header) {
     /* Converts a RAW tar header (all char,
@@ -58,66 +46,6 @@ void get_file_from_archive(const char *tarfile, const char *filename) {
     }*/
 }
 
-char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
-    /* Maps only a specific part of the file
-     * to memory: current offset. f can only be
-     * accessed with the correct file-based offset
-     */
-    char *f;
-
-#ifdef POSIX
-    // Use native mmap() on POSIX-systems
-    int pgsize = sysconf(_SC_PAGESIZE);
-    *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
-
-    f = (char *) mmap(0, pgsize, PROT_READ, MAP_PRIVATE,
-                      tar_file->fd, *new_offset);
-
-    if (f == MAP_FAILED) {
-#ifdef DEBUG
-        fprintf(stderr, "tarantula: mmap() failed: %s\n", f);
-#endif
-        return NULL;
-#ifdef DEBUG
-    } else {
-        printf("tarantula: mmap (offset: '%i') SUCCESS\n", *new_offset);
-#endif
-    }
-
-#elif (defined(WINBUILD))
-    // Use MapViewOfFile on Windows-systems
-    // TODO: Adapt this to the used pagesize boundary model above
-    HANDLE fdhandle = CreateFile(tar_file->filename,
-                                 GENERIC_READ,
-                                 FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                 NULL, OPEN_EXISTING,
-                                 FILE_ATTRIBUTE_NORMAL, NULL);
-    HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY,
-                                          0, s.st_size, 0);
-    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, s.st_size);
-    if (f == NULL) {
-        // TODO: Correct error handling
-        return NULL;
-    }
-#endif
-    return f;
-}
-
-void unmap_file(char *f, tar_fle *tar_file) {
-    /* unmap the file from memory */
-#ifdef POSIX
-    if (munmap(f, sysconf(_SC_PAGESIZE)) != 0) {
-#ifdef DEBUG
-        fprintf(stderr, "tarantula: munmap failed!\n");
-    } else {
-        printf("tarantula: munmap SUCCESS\n");
-#endif
-    }
-#elif (defined(WINBUILD))
-    DO STUFF HERE! TODO!
-#endif
-}
-
 int get_next_header(tar_fle *tar_file) {
     /* Used to iterate over all headers in archive
      * Header can then be used to retrieve a specific file.
@@ -129,16 +57,12 @@ int get_next_header(tar_fle *tar_file) {
     if (f == NULL) {
         // Break loop if mmap failed
         // Try to undo mmap
-        unmap_file(f,tar_file);
+        unmap_file(f, tar_file);
         return 0;
     }
 
     if (tar_file->s.st_size-tar_file->curpos <= HEADERLEN) {
         // Break loop on file end (less than 500 bytes)
-#ifdef DEBUG
-        printf("tarantula: File end reached: (%i/%li)\n",
-               tar_file->curpos, tar_file->s.st_size);
-#endif
         unmap_file(f, tar_file);
         return 0;
     }
@@ -147,7 +71,6 @@ int get_next_header(tar_fle *tar_file) {
     raw_header = (tar_raw*)((f-new_offset)+tar_file->curpos);
 
     /* Convert from raw to normalized header struct */
-    // TODO: This might fail?
     __raw_to_norm(raw_header, &tar_file->curheader);
 
     tar_file->curheader.offset = tar_file->curpos;  // Add current offset to header
@@ -158,13 +81,10 @@ int get_next_header(tar_fle *tar_file) {
         tar_file->curpos = ((tar_file->curpos/512)+1)*512;
     }
 
-    char empty_buf[HEADERLEN] = { 0 };
+    char empty_buf[HEADERLEN] = {0};
     if (memcmp(raw_header, empty_buf, sizeof(tar_raw)) == 0) {
         // Skip current header if it is empty
         unmap_file(f, tar_file);
-#ifdef DEBUG
-        printf("tarantula: Skipping current header as it is empty\n");
-#endif
         return get_next_header(tar_file);
     }
 
@@ -209,6 +129,7 @@ int get_all_headers(const char *tarfile, tar_headers *headers) {
 }
 
 int tar_open(const char *tarfile, tar_fle *tar_file) {
+    //_tar_open(const char *tarfile, tar_fle *tar_file)
     tar header;
     header.offset = 0;
     tar_file->filename = tarfile;
@@ -217,15 +138,9 @@ int tar_open(const char *tarfile, tar_fle *tar_file) {
 
     tar_file->fd = open(tarfile, O_RDONLY);
 
-    if ((tar_file->fd < 0) || (fstat(tar_file->fd, &tar_file->s) != 0)) {
-#ifdef DEBUG
-        fprintf(stderr, "tarantula: Failed to open file '%s'\n", tarfile);
-#endif
+    if ((tar_file->fd < 0) || (fstat(tar_file->fd, &tar_file->s) != 0))
         return 1;
-    }
-#ifdef DEBUG
-    printf("tarantula: Opened file '%s'\n", tarfile);
-#endif
+
     return 0;
 }
 
