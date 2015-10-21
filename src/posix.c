@@ -11,7 +11,7 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
     char *f;
 
     // Use native mmap() on POSIX-systems
-    int pgsize = sysconf(_SC_PAGESIZE);
+    const int pgsize = sysconf(_SC_PAGESIZE);
     *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
 
     f = (char *) mmap(0, pgsize, PROT_READ, MAP_PRIVATE,
