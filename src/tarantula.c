@@ -66,9 +66,9 @@ int get_next_header(tar_fle *tar_file) {
         unmap_file(f, tar_file);
         return 0;
     }
-
+    
     // Write raw data from file to tar_raw struct
-    raw_header = (tar_raw*)((f-new_offset)+tar_file->curpos);
+    raw_header = (tar_raw*)(f+(tar_file->curpos-new_offset));
 
     /* Convert from raw to normalized header struct */
     __raw_to_norm(raw_header, &tar_file->curheader);
