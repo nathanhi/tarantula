@@ -10,17 +10,15 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
      * to memory: current offset. f can only be
      * accessed with the correct file-based offset
      */
-    char *f;
+    char *f = NULL;
     
     // Retrieve page size
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    int pgsize = sysinfo.dwPageSize;
+    const int pgsize = sysinfo.dwAllocationGranularity;
     
-    // Adjust offset according to pagesize
-    /* Not required on Windows, but lets keep things
-     * compatible
-     */
+    // Adjust offset according to pagesize (called 
+    // allocation granularity on Windows)
     *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
 
     // Convert file descriptor to HANDLE
@@ -29,13 +27,13 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
         return NULL;
 
     // Create file mapping object for tar file
-    HANDLE mmaphandle = CreateFileMapping(fdhandle, 0, PAGE_WRITECOPY,
-                                          0, (DWORD)*new_offset, 0);
+    HANDLE mmaphandle = CreateFileMapping(fdhandle, NULL, PAGE_WRITECOPY,
+                                          (DWORD)0, (DWORD)(tar_file->s.st_size-*new_offset), NULL);
     if (mmaphandle == INVALID_HANDLE_VALUE)
         return NULL;
 
     // Map view of file mapping to memory
-    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, 0, 0, (SIZE_T)*new_offset);
+    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, (DWORD)0, (DWORD)0, (SIZE_T)(tar_file->s.st_size-*new_offset));
     if (f == NULL)
         return NULL;
 

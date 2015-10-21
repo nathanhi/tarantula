@@ -88,8 +88,10 @@ int get_next_header(tar_fle *tar_file) {
         return get_next_header(tar_file);
     }
 
-    // Continue loop if no errors occured
+    // Unmap page from memory
     unmap_file(f, tar_file);
+
+    // Continue loop if no errors occured
     return 1;
 }
 
