@@ -22,7 +22,7 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
     *new_offset = (((tar_file->curpos/pgsize)+1)*pgsize)-pgsize;
 
     // Convert file descriptor to HANDLE
-    HANDLE fdhandle = _get_osfhandle(tar_file->fd);
+    HANDLE fdhandle = (HANDLE)_get_osfhandle(tar_file->fd);
     if (fdhandle == INVALID_HANDLE_VALUE)
         return NULL;
 
