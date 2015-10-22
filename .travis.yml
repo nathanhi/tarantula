@@ -4,4 +4,8 @@ compiler:
   - clang
   - gcc
 
-script: make
+os:
+  - linux
+  - osx
+
+script: make clean sample
