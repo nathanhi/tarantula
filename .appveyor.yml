@@ -1,18 +1,20 @@
 version: '{build}'
 
-platform:
-- x64
-
 environment:
   matrix:
   - BUILDTYPE: MINGW
   - BUILDTYPE: VS
+    platform: x64
+    msvs_toolset: 14
+  - BUILDTYPE: VS
+    platform: x86
+    msvs_toolset: 14
+
+os: Visual Studio 2015
 
 install:
-- '@echo off'
-- IF "%BUILDTYPE%" == "MINGW" ( ECHO "MinGW build" && SET "PATH=%PATH%;C:\MinGW\bin" ) ELSE ( ECHO "Visual Studio build" && "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 && "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64 && SET "PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\amd64")
+- 'scripts\build-appveyor.cmd'
 
-build_script:
-- '@echo off'
-- SET
-- IF "%BUILDTYPE%" == "MINGW" ( mingw32-make ) ELSE ( nmake /f Makefile.nm )
+build: off
+test: off
+deploy: off
