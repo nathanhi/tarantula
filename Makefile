@@ -24,7 +24,7 @@ debug: src/tarantula.c
 	$(CC) -shared -o src/libtarantula$(LIBEND) src/posix.o src/tarantula.o
 
 sample: sample/sample.c
-	$(CC) sample/sample.c -o src/sample -Lsrc -ltarantula $(CFLAGS) -std=c99 -O2 -Wall -Werror -Wl,-rpath=$(PWD)/src
+	$(CC) sample/sample.c -o src/sample -Lsrc -ltarantula $(CFLAGS) -std=c99 -O2 -Wall -Werror
 
 clean:
 	$(RM) src/*$(LIBEND) src/*.o src/sample$(BINEND)
