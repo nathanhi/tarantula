@@ -33,7 +33,7 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
         return NULL;
 
     // Map view of file mapping to memory
-    f = MapViewOfFile(mmaphandle, FILE_MAP_COPY, (DWORD)0, (DWORD)0, (SIZE_T)(tar_file->s.st_size-*new_offset));
+    f = (char*)MapViewOfFile(mmaphandle, FILE_MAP_COPY, (DWORD)0, (DWORD)0, (SIZE_T)(tar_file->s.st_size-*new_offset));
     if (f == NULL)
         return NULL;
 
