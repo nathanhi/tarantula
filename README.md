@@ -1,6 +1,6 @@
-Linux Build Status (clang&GCC): [![Travis Build Status](https://travis-ci.org/nathanhi/tarantula.svg?branch=master)](https://travis-ci.org/nathanhi/tarantula)
+Linux/Mac OS X Build Status (clang+LLVM): [![Travis Build Status](https://travis-ci.org/nathanhi/tarantula.svg?branch=master)](https://travis-ci.org/nathanhi/tarantula)
 
-Windows Build Status (MinGW&&MSVC): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/9t3rrqgtja8ny3j6?svg=true)](https://ci.appveyor.com/project/nathanhi/tarantula)
+Windows Build Status (MSVC14): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/9t3rrqgtja8ny3j6?svg=true)](https://ci.appveyor.com/project/nathanhi/tarantula)
 # tarantula
 Cross-platform TAR library written in C
 
