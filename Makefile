@@ -19,7 +19,7 @@ posix:
 	$(CC) -c src/posix.c -o src/posix.o $(CFLAGS) -O2 -Wall -Werror $(FPIC)
 
 libtarantula: posix src/tarantula.c
-	$(CC) -c src/tarantula.c -o src/tarantula.o $(CFLAGS) -O2 -Wall -Werror $(FPIC)
+	$(CC) -c src/tarantula.c -o src/tarantula.o $(CFLAGS) -O2 -Wall -Werror $(FPIC) -std=c99
 	$(CC) -shared -o src/libtarantula$(LIBEND) src/posix.o src/tarantula.o
 
 sample: sample/sample.c
