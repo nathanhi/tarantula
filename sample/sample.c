@@ -48,7 +48,7 @@ void example_get_next_header() {
         printf("modification_time: '%lli'\n", tar_file.curheader.modification_time);
 #endif
         printf("checksum: '%s'\n", tar_file.curheader.checksum);
-        printf("typeflag: '%i'\n", tar_file.curheader.typeflag);
+        printf("typeflag: '%s'\n", tar_file.curheader.typeflag);
         printf("linktarget: '%s'\n", tar_file.curheader.linktarget);
         printf("ustarindicator: '%s'\n", tar_file.curheader.ustarindicator);
         printf("ustarversion: '%i'\n", tar_file.curheader.ustarversion);

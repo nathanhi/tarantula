@@ -16,14 +16,14 @@ void __raw_to_norm(tar_raw *header, tar *norm_header) {
     strncpy(norm_header->ustarindicator, header->ustarindicator, 6);
     strncpy(norm_header->owner_username, header->owner_username, 32);
     strncpy(norm_header->owner_groupname, header->owner_groupname, 32);
+    strncpy(norm_header->typeflag, header->typeflag, 1);
     strncpy(norm_header->filename_prefix, header->filename_prefix, 155);
-    
+
     /* Convert these values to int */
     norm_header->filemode = atoi(header->filemode);
     norm_header->owner_UID = atoi(header->owner_UID);
     norm_header->owner_GID = atoi(header->owner_GID);
     norm_header->filesize = atoi(header->filesize);
-    norm_header->typeflag = atoi(header->typeflag);
     norm_header->ustarversion = atoi(header->ustarversion);
     norm_header->device_majornumber = atoi(header->device_majornumber);
     norm_header->device_minornumber = atoi(header->device_minornumber);
@@ -53,7 +53,7 @@ int get_next_header(tar_fle *tar_file) {
     tar_raw *raw_header;
     int new_offset;
     char *f = map_file_on_offset(tar_file, &new_offset);
-    
+
     if (f == NULL) {
         // Break loop if mmap failed
         // Try to undo mmap
@@ -66,7 +66,7 @@ int get_next_header(tar_fle *tar_file) {
         unmap_file(f, tar_file);
         return 0;
     }
-    
+
     // Write raw data from file to tar_raw struct
     raw_header = (tar_raw*)(f+(tar_file->curpos-new_offset));
 

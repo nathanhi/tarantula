@@ -21,6 +21,17 @@
 #define FILENAMEPREFIX_OFFSET 345
 #define HEADERLEN 512
 
+#define TYPE_FILE "0"
+#define TYPE_HARDLINK "1"
+#define TYPE_SYMLINK "2"
+#define TYPE_CHAR_SPECIAL "3"
+#define TYPE_BLOCK_SPECIAL "4"
+#define TYPE_DIRECTORY "5"
+#define TYPE_FIFO "6"
+#define TYPE_CONTIG_FILE "7"
+#define TYPE_GLOBAL_EXTENDED "g"
+#define TYPE_EXTENDED_HEADER "x"
+
 /* Field Offset  Field Size  Field
  * 0             100         File name
  * 100           8           File mode
@@ -29,7 +40,7 @@
  * 124           12          File size in bytes (octal base)
  * 136           12          Last modification time in numeric Unix time format (octal)
  * 148           8           Checksum for header record
- * 156                       Type flag, possible values:
+ * 156           1           Type flag, possible values:
  *                            - 0: Normal file
  *                            - 1: Hard link
  *                            - 2: Symbolic link
@@ -61,7 +72,7 @@ typedef struct tar {
     long long int filesize;
     long long int modification_time;
     char checksum[8];
-    int typeflag;
+    char typeflag[1];
     char linktarget[100];
     char ustarindicator[6];
     int ustarversion;
