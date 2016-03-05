@@ -48,3 +48,17 @@ void unmap_file(char *f, tar_fle *tar_file) {
 int tar_close(tar_fle *tar_file) {
     return _close(tar_file->fd);
 }
+
+int fd_get_offset(int fd) {
+    HANDLE fdhandle = (HANDLE)_get_osfhandle(fd);
+    return (int)SetFilePointer(fdhandle, 0, NULL, FILE_CURRENT);
+}
+
+int fd_set_offset(int fd, int offset) {
+    HANDLE fdhandle = (HANDLE)_get_osfhandle(fd);
+    return (int)SetFilePointer(fdhandle, offset, NULL, FILE_BEGIN);
+}
+
+int fd_read(int fd, void *buffer, int count) {
+    return _read(fd, buffer, count);
+}

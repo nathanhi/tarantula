@@ -27,23 +27,44 @@ void __raw_to_norm(tar_raw *header, tar *norm_header) {
     norm_header->ustarversion = atoi(header->ustarversion);
     norm_header->device_majornumber = atoi(header->device_majornumber);
     norm_header->device_minornumber = atoi(header->device_minornumber);
-    
+
     /* Convert these values to long long int */
     norm_header->filesize = strtoll(header->filesize, NULL, 8);
     norm_header->modification_time = strtoll(header->modification_time, NULL, 8);
 }
 
-void get_file_from_archive(const char *tarfile, const char *filename) {
-    /*struct tar_headers headers = list_archive_content(tarfile);
+char *extract_to_mem(tar_fle *tar_file, const char *filename, int *filesize) {
+    // Extracts given file from given archive. Returns NULL if file not found.
+    // TODO: Return latest file in archive if there is more than one file with the same name!
+    tar_headers headers;
+    char fname[255];
+    strncpy(fname, filename, 255);
+
+    get_all_headers(tar_file, &headers);
+
     for (int i=0; i <= headers.files; i++) {
-        if (strcmp(headers.headers[i].filename, filename) == 0) {
-            // Read data from current file
-            char *data = malloc(header_norm.filesize);
-            memcpy(data, f+curpos+HEADERLEN, header_norm.filesize);
-            printf("data: '%s'\n", data);
-            printf("%s", headers.headers[i].);
+        // Search for correct file
+        if (strcmp(headers.headers[i].filename, fname) == 0 &&
+            strcmp(headers.headers[i].typeflag, TYPE_FILE) == 0) {
+            // Backup old offset and seek to new offset
+            int old_fd_offset = fd_get_offset(tar_file->fd);
+            fd_set_offset(tar_file->fd, headers.headers[i].offset+HEADERLEN);
+
+            // Allocate buffer and write file to memory
+            char *data = malloc(headers.headers[i].filesize);
+            fd_read(tar_file->fd, data, headers.headers[i].filesize);
+
+            // Restore old offset
+            fd_set_offset(tar_file->fd, old_fd_offset);
+
+            // Return data and filesize
+            *filesize = headers.headers[i].filesize;
+            return data;
         }
-    }*/
+    }
+
+    // Returns NULL if file not found
+    return NULL;
 }
 
 int get_next_header(tar_fle *tar_file) {
@@ -95,39 +116,56 @@ int get_next_header(tar_fle *tar_file) {
     return 1;
 }
 
-int get_all_headers(const char *tarfile, tar_headers *headers) {
+int get_all_headers_from_file(const char *tarfile, tar_headers *headers) {
     // Iterates over every header and fills a
     // dynamic array with every encountered header.
     // Handles tar_open() and tar_close() automatically.
-    
+
     // Open tar file
     tar_fle tar_file;
     if (tar_open(tarfile, &tar_file) != 0) {
         return 1;
     }
 
+    // Iterate over every header and fill a dynamic array
+    get_all_headers(&tar_file, headers);
+
+    // Close tar file
+    tar_close(&tar_file);
+    return 0;
+}
+
+void get_all_headers(tar_fle *tar_file, tar_headers *headers) {
+    // Iterates over every header and fills a
+    // dynamic array with every encountered header.
     // Variable declaration for dynamic array
-    tar *tar_array = NULL;
+    tar *tar_array = {NULL};
     int arsize = 0;
     int aritems = 0;
 
-    while(get_next_header(&tar_file)) {
+    // Preparation in case tar_fle's FD is already used / on a different offset
+    int old_offset = tar_file->curpos;
+    int old_fd_offset = fd_get_offset(tar_file->fd);
+    fd_set_offset(tar_file->fd, 0);
+    tar_file->curpos = 0;
+
+    while(get_next_header(tar_file)) {
         // Iterate over headers of tar file
         // Add struct to dynamic array
         arsize += sizeof(tar);
         void *_artmp = realloc(tar_array, arsize);
-        tar_array = (tar*)_artmp;
-        tar_array[aritems] = tar_file.curheader;
+        tar_array = _artmp;
+        tar_array[aritems] = tar_file->curheader;
         aritems++;
     }
-    
-    // Close tar file
-    tar_close(&tar_file);
 
     // Build final data type tar_headers
     headers->headers = tar_array;
     headers->files = aritems;
-    return 0;
+
+    // Reset offset
+    tar_file->curpos = old_offset;
+    fd_set_offset(tar_file->fd, old_fd_offset);
 }
 
 int tar_open(const char *tarfile, tar_fle *tar_file) {

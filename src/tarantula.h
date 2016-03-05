@@ -115,9 +115,10 @@ typedef struct tar_fle {
     int curpos;
 } tar_fle;
 
-void get_file_from_archive(const char *tarfile, const char *filename);
+char *extract_to_mem(tar_fle *tar_file, const char *filename, int *filesize);
 int get_next_header(tar_fle *tar_file);
-int get_all_headers(const char *tarfile, tar_headers *headers);
+int get_all_headers_from_file(const char *tarfile, tar_headers *headers);
+void get_all_headers(tar_fle *tar_file, tar_headers *headers);
 int tar_open(const char *tarfile, tar_fle *tar_file);
 int tar_close(tar_fle *tar_file);
 

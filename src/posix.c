@@ -1,7 +1,8 @@
 #include "platform.h"
 
 #include <sys/mman.h> // mmap()
-#include <unistd.h> // close(), getpagesize()
+#include <unistd.h> // close(), getpagesize(), lseek()
+
 
 char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
     /* Maps only a specific part of the file
@@ -30,4 +31,16 @@ void unmap_file(char *f, tar_fle *tar_file) {
 
 int tar_close(tar_fle *tar_file) {
     return close(tar_file->fd);
+}
+
+int fd_get_offset(int fd) {
+    return lseek(fd, 0, SEEK_CUR);
+}
+
+int fd_set_offset(int fd, int offset) {
+    return lseek(fd, offset, SEEK_SET);
+}
+
+int fd_read(int fd, void *buffer, int count) {
+    return read(fd, buffer, count);
 }

@@ -9,7 +9,7 @@ void example_get_all_headers() {
 
     // Call get_all_headers()
     tar_headers header_array;
-    if (get_all_headers("../sample/sample.tar", &header_array) != 0) {
+    if (get_all_headers_from_file("../sample/sample.tar", &header_array) != 0) {
         printf("Failed to retrieve headers from tar file. Aborting.\n");
         return;
     }
@@ -57,6 +57,8 @@ void example_get_next_header() {
         printf("device_majornumber: '%i'\n", tar_file.curheader.device_majornumber);
         printf("device_minornumber: '%i'\n", tar_file.curheader.device_minornumber);
         printf("filename_prefix: '%s'\n", tar_file.curheader.filename_prefix);
+        int filesize = 0;
+        printf("file content:\n%s\n", extract_to_mem(&tar_file, tar_file.curheader.filename, &filesize));
         printf("--------------------------------\n");
     }
 
