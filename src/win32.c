@@ -27,13 +27,13 @@ char *map_file_on_offset(tar_fle *tar_file, int *new_offset) {
         return NULL;
 
     // Create file mapping object for tar file
-    HANDLE mmaphandle = CreateFileMapping(fdhandle, NULL, PAGE_WRITECOPY,
-                                          (DWORD)0, (DWORD)(tar_file->s.st_size-*new_offset), NULL);
+    HANDLE mmaphandle = CreateFileMapping(fdhandle, NULL, PAGE_READONLY,
+                                          (DWORD)0, (DWORD)0, NULL);
     if (mmaphandle == INVALID_HANDLE_VALUE)
         return NULL;
 
     // Map view of file mapping to memory
-    f = (char*)MapViewOfFile(mmaphandle, FILE_MAP_COPY, (DWORD)0, (DWORD)0, (SIZE_T)(tar_file->s.st_size-*new_offset));
+    f = (char*)MapViewOfFile(mmaphandle, FILE_MAP_COPY, (DWORD)0, (DWORD)*new_offset, (SIZE_T)(tar_file->s.st_size-*new_offset));
     if (f == NULL)
         return NULL;
 

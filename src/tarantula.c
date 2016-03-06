@@ -91,10 +91,13 @@ int get_next_header(tar_fle *tar_file) {
     // Write raw data from file to tar_raw struct
     raw_header = (tar_raw*)(f+(tar_file->curpos-new_offset));
 
-    /* Convert from raw to normalized header struct */
+    // Convert from raw to normalized header struct
     __raw_to_norm(raw_header, &tar_file->curheader);
 
-    tar_file->curheader.offset = tar_file->curpos;  // Add current offset to header
+    // Add current offset to header struct
+    tar_file->curheader.offset = tar_file->curpos;
+
+    // Update current position. Add HEADERLEN and filesize to old curpos
     tar_file->curpos = tar_file->curpos+HEADERLEN+tar_file->curheader.filesize;
     if (tar_file->curpos % 512 != 0) {
         // If the current position is not a multiple
