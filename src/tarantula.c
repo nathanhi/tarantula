@@ -179,7 +179,7 @@ int tar_open(const char *tarfile, tar_fle *tar_file) {
     tar_file->curheader = header;
     tar_file->curpos = 0;
 
-    tar_file->fd = open(tarfile, O_RDONLY);
+    tar_file->fd = open(tarfile, O_RDONLY|O_BINARY);
 
     if ((tar_file->fd < 0) || (fstat(tar_file->fd, &tar_file->s) != 0))
         return 1;
