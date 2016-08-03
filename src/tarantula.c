@@ -42,7 +42,7 @@ char *extract_to_mem(tar_fle *tar_file, const char *filename, int *filesize) {
 
     get_all_headers(tar_file, &headers);
 
-    for (int i=0; i <= headers.files; i++) {
+    for (int i=0; i <= headers.files-1; i++) {
         // Search for correct file
         if (strcmp(headers.headers[i].filename, fname) == 0 &&
             strcmp(headers.headers[i].typeflag, TYPE_FILE) == 0) {
